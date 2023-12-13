@@ -1,0 +1,80 @@
+﻿@page "/spells"
+@inject HttpClient Http;
+@using System.Text;
+@using System.Net.Http.Json;
+@using Newtonsoft.Json;
+@using Newtonsoft.Json.Linq;
+@using Microsoft.AspNetCore.Components.QuickGrid;
+
+<h2 class="text-center fw-bold pt-2">Skills</h2>
+
+<h5 class="text-center fst-italic">All skills available to the player in the Capcom title "Monster Hunter World"</h5>
+<hr />
+
+
+@if (spellsData != null)
+{
+	<div class="page-size-chooser text-end">
+		Items per page:
+		<select @bind="@pagination.ItemsPerPage">
+			<option>10</option>
+			<option>20</option>
+			<option>50</option>
+			<option>100</option>
+			<option>200</option>
+		</select>
+
+
+	</div>
+	//quickgrid allows for easier table displays without the need for tr/td tag syntax
+	<QuickGrid Items="@spellsData" Pagination="@pagination">
+		<PropertyColumn Property="@(p => p.name)" Sortable="true" Align="Align.Right" Title="Name" IsDefaultSortColumn="true" />
+
+		<PropertyColumn Property="@(p => p.description)" Sortable="true" Title="Description" />
+	</QuickGrid>
+	<div class ="text-end">
+		<a class="btn btn-outline-info badge text-black" href="/spells">Back to top</a>
+	</div>
+	<Paginator State="@pagination" />
+
+}
+else
+{
+	<br />
+	<h3 class=" text-center">One Moment...</h3>
+}
+
+
+@code {
+
+	IQueryable<Skill>? spellsData;
+	PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+	string nameFilter;
+
+	bool showName = true;
+	bool showBirthDate = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			var returned = await Http.GetFromJsonAsync<Skill[]>("https://mhw-db.com/skills");
+
+			spellsData = returned.AsQueryable();
+
+		}
+		catch (Exception e)
+		{
+			Console.WriteLine(e.Message);
+		}
+
+
+	}
+
+	public class Skill
+	{
+		public int id { get; set; }
+		public string name { get; set; }
+		public string description { get; set; }
+	}
+}
